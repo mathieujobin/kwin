@@ -2029,7 +2029,8 @@ void X11Client::takeFocus()
     else
         demandAttention(false); // window cannot take input, at least withdraw urgency
     if (info->supportsProtocol(NET::TakeFocusProtocol)) {
-        sendClientMessage(window(), atoms->wm_protocols, atoms->wm_take_focus, 0, 0, 0, XCB_CURRENT_TIME);
+        updateXTime();
+        sendClientMessage(window(), atoms->wm_protocols, atoms->wm_take_focus);
     }
     workspace()->setShouldGetFocus(this);
 
