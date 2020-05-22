@@ -605,6 +605,9 @@ void BlurEffect::drawWindow(EffectWindow *w, int mask, const QRegion &region, Wi
             shape = shape.translated(data.xTranslation(), data.yTranslation());
             shape = shape & region;
         }
+        
+        EffectWindow* modal = w->transientFor();
+        const bool transientForIsDock = (modal ? modal->isDock() || transientForIsDock : false);
 
         if (!shape.isEmpty()) {
             doBlur(shape, screen, data.opacity(), data.screenProjectionMatrix(), w->isDock(), w->geometry());
