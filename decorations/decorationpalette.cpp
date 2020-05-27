@@ -62,8 +62,12 @@ DecorationPalette::DecorationPalette(const QString &colorScheme)
 
 bool DecorationPalette::isValid() const
 {
-    return m_activeTitleBarColor.isValid();
+    return true;
 }
+
+#define ColorSchemeColor(qpalette, colorset, kind) KColorScheme(QPalette::qpalette, KColorScheme::ColorSet::colorset, m_colorSchemeConfig).kind().color()
+#define ColorSchemeColorWithForegroundKind(qpalette, colorset, kind, foreground) KColorScheme(QPalette::qpalette, KColorScheme::ColorSet::colorset, m_colorSchemeConfig).kind(KColorScheme::ForegroundRole::foreground).color()
+#define ColorSchemeColorWithShade(qpalette, colorset, shadekind) KColorScheme(QPalette::qpalette, KColorScheme::ColorSet::colorset, m_colorSchemeConfig).shade(KColorScheme::ShadeRole::shadekind)
 
 QColor DecorationPalette::color(KDecoration2::ColorGroup group, KDecoration2::ColorRole role) const
 {
@@ -74,29 +78,29 @@ QColor DecorationPalette::color(KDecoration2::ColorGroup group, KDecoration2::Co
         case ColorRole::Frame:
             switch (group) {
                 case ColorGroup::Active:
-                    return m_activeFrameColor;
+                    return ColorSchemeColorWithShade(Normal, Header, ShadowShade);
                 case ColorGroup::Inactive:
-                    return m_inactiveFrameColor;
+                    return ColorSchemeColorWithShade(Inactive, Header, ShadowShade);
                 default:
                     return QColor();
             }
         case ColorRole::TitleBar:
             switch (group) {
                 case ColorGroup::Active:
-                    return m_activeTitleBarColor;
+                    return ColorSchemeColor(Normal, Header, background);
                 case ColorGroup::Inactive:
-                    return m_inactiveTitleBarColor;
+                    return ColorSchemeColor(Inactive, Header, background);
                 default:
                     return QColor();
             }
         case ColorRole::Foreground:
             switch (group) {
                 case ColorGroup::Active:
-                    return m_activeForegroundColor;
+                    return ColorSchemeColor(Normal, Header, foreground);
                 case ColorGroup::Inactive:
-                    return m_inactiveForegroundColor;
+                    return ColorSchemeColor(Inactive, Header, foreground);
                 case ColorGroup::Warning:
-                    return m_warningForegroundColor;
+                    return ColorSchemeColorWithForegroundKind(Inactive, Header, foreground, NegativeText);
                 default:
                     return QColor();
             }
@@ -112,26 +116,8 @@ QPalette DecorationPalette::palette() const
 
 void DecorationPalette::update()
 {
-    auto config = KSharedConfig::openConfig(m_colorScheme, KConfig::SimpleConfig);
-    KConfigGroup wmConfig(config, QStringLiteral("WM"));
-
-    if (!wmConfig.exists() && !m_colorScheme.endsWith(QStringLiteral("/kdeglobals"))) {
-        qCWarning(KWIN_DECORATIONS) << "Invalid color scheme" << m_colorScheme << "lacks WM group";
-        return;
-    }
-
-    m_palette = KColorScheme::createApplicationPalette(config);
-
-    m_activeFrameColor        = wmConfig.readEntry("frame", m_palette.color(QPalette::Active, QPalette::Window));
-    m_inactiveFrameColor      = wmConfig.readEntry("inactiveFrame", m_activeFrameColor);
-    m_activeTitleBarColor     = wmConfig.readEntry("activeBackground", m_palette.color(QPalette::Active, QPalette::Highlight));
-    m_inactiveTitleBarColor   = wmConfig.readEntry("inactiveBackground", m_inactiveFrameColor);
-    m_activeForegroundColor   = wmConfig.readEntry("activeForeground", m_palette.color(QPalette::Active, QPalette::HighlightedText));
-    m_inactiveForegroundColor = wmConfig.readEntry("inactiveForeground", m_activeForegroundColor.darker());
-
-    KConfigGroup windowColorsConfig(config, QStringLiteral("Colors:Window"));
-    m_warningForegroundColor = windowColorsConfig.readEntry("ForegroundNegative", QColor(237, 21, 2));
-
+    m_colorSchemeConfig = KSharedConfig::openConfig(m_colorScheme, KConfig::SimpleConfig);
+    m_palette = KColorScheme::createApplicationPalette(m_colorSchemeConfig);
 }
 
 }
